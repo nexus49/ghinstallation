@@ -160,6 +160,19 @@ func (t *Transport) Token(ctx context.Context) (string, error) {
 	return t.token.Token, nil
 }
 
+func (t *Transport) AccessToken(ctx context.Context) (*accessToken, error) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	if t.token.isExpired() {
+		// Token is not set or expired/nearly expired, so refresh
+		if err := t.refreshToken(ctx); err != nil {
+			return nil, fmt.Errorf("could not refresh installation id %v's token: %w", t.installationID, err)
+		}
+	}
+
+	return t.token, nil
+}
+
 // Permissions returns a transport token's GitHub installation permissions.
 func (t *Transport) Permissions() (github.InstallationPermissions, error) {
 	if t.token == nil {
